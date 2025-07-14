@@ -1,0 +1,83 @@
+let paddle, ball, blocks = [], dx = 10, dy = -10;
+let message = "";
+let cols = 10, rows = 5, blockW = 50, blockH = 20;
+let rainbowTick = 0;
+
+function setup() {
+  createCanvas(600, 800);
+  paddle = { x: width/2 - 60, w: 120, h: 10 };
+  ball = { x: width/2, y: height/2, r: 10 };
+
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      blocks.push({ x: 60 * x + 10, y: 40 * y + 10, w: blockW, h: blockH });
+    }
+  }
+}
+
+function draw() {
+  rainbowTick++;
+  background(rainbowColor(rainbowTick));
+
+  // パドル移動
+  if (mouseIsPressed) paddle.x = mouseX - paddle.w/2;
+  else if (touches.length > 0) paddle.x = touches[0].x - paddle.w/2;
+
+  paddle.x = constrain(paddle.x, 0, width - paddle.w);
+
+  // ボール移動
+  ball.x += dx;
+  ball.y += dy;
+
+  if (ball.x <= 0 || ball.x >= width) dx *= -1;
+  if (ball.y <= 0) dy *= -1;
+
+  // パドル衝突
+  if (ball.y + ball.r >= height - 30 &&
+      ball.x >= paddle.x && ball.x <= paddle.x + paddle.w) {
+    dy *= -1;
+    ball.y = height - 40;
+  }
+
+  // ブロック衝突
+  for (let i = blocks.length - 1; i >= 0; i--) {
+    let b = blocks[i];
+    if (ball.x > b.x && ball.x < b.x + b.w &&
+        ball.y - ball.r < b.y + b.h && ball.y + ball.r > b.y) {
+      blocks.splice(i, 1);
+      dy *= -1;
+      break;
+    }
+  }
+
+  // 結果判定
+  if (ball.y > height && message === "") {
+    message = "がっかりだよ。ごらあ！";
+  }
+  if (blocks.length === 0 && message === "") {
+    message = "すごいね！ごらああ！！";
+  }
+
+  // 描画
+  fill(255);
+  rect(paddle.x, height - 30, paddle.w, paddle.h);
+  ellipse(ball.x, ball.y, ball.r * 2);
+  for (let b of blocks) {
+    rect(b.x, b.y, b.w, b.h);
+  }
+
+  if (message) {
+    fill(0);
+    textSize(36);
+    textAlign(CENTER, CENTER);
+    text(message, width/2, height/2);
+    noLoop();  // 停止
+  }
+}
+
+function rainbowColor(t) {
+  let r = sin(0.05 * t + 0) * 127 + 128;
+  let g = sin(0.05 * t + 2) * 127 + 128;
+  let b = sin(0.05 * t + 4) * 127 + 128;
+  return color(r, g, b);
+}
